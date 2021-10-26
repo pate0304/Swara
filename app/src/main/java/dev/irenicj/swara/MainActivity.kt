@@ -4,13 +4,11 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import butterknife.Bind
-import butterknife.ButterKnife
-import butterknife.OnClick
 import com.voxeet.VoxeetSDK
 import com.voxeet.promise.solve.*
 import com.voxeet.sdk.json.ParticipantInfo
@@ -18,6 +16,7 @@ import com.voxeet.sdk.json.internal.ParamsHolder
 import com.voxeet.sdk.models.Conference
 import com.voxeet.sdk.services.builders.ConferenceCreateOptions
 import com.voxeet.sdk.services.builders.ConferenceJoinOptions
+import dev.irenicj.swara.databinding.ActivityMainBinding
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -34,17 +33,18 @@ class MainActivity : AppCompatActivity() {
     val buttonsInOwnScreenShare: List<View> = ArrayList()
     val buttonsNotInOwnScreenShare: List<View> = ArrayList()
 
-    @Bind(R.id.user_name)
     var user_name: EditText? = null
 
-    @Bind(R.id.conference_name)
     var conference_name: EditText? = null
 
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        ButterKnife.bind(this);
+        binding= ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+
 
 
         //we now initialize the sdk
@@ -76,14 +76,24 @@ class MainActivity : AppCompatActivity() {
                 "Hulk",
                 "Spider-Man")
         val r = Random()
-        user_name?.setText(avengersNames[r.nextInt(avengersNames.size)])
+        binding.userName.setText(avengersNames[r.nextInt(avengersNames.size)])
 
         // Add the join button and enable it only when not in a conference
         add(views, R.id.join);
         add(buttonsNotInConference, R.id.join);
 
         // Set a default conference name
-        conference_name?.setText("Avengers meeting");
+        binding.conferenceName.setText("Avengers meeting");
+
+
+        //binding on click listeners for buttons
+        binding.login.setOnClickListener { onLogin() }
+        binding.join.setOnClickListener { onJoin()}
+        binding.leave.setOnClickListener { onLeave()}
+        binding.logout.setOnClickListener { onLogout()}
+
+        val x : Button
+
     }
 
     override fun onResume() {
@@ -139,9 +149,9 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    @OnClick(R.id.login)
+
     fun onLogin() {
-        VoxeetSDK.session().open(ParticipantInfo(user_name!!.text.toString(), "", ""))
+        VoxeetSDK.session().open(ParticipantInfo(binding.userName.text.toString(), "", ""))
                 .then { result: Boolean?, solver: Solver<Any?>? ->
                     Toast.makeText(this@MainActivity, "log in successful", Toast.LENGTH_SHORT).show()
                     updateViews()
@@ -150,7 +160,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    @OnClick(R.id.logout)
+
+
     fun onLogout() {
         VoxeetSDK.session().close()
                 .then { result: Boolean?, solver: Solver<Any?>? ->
@@ -159,13 +170,13 @@ class MainActivity : AppCompatActivity() {
                 }.error(error())
     }
 
-    @OnClick(R.id.join)
+
     fun onJoin() {
         val paramsHolder = ParamsHolder()
         paramsHolder.setDolbyVoice(true)
 
         val conferenceCreateOptions = ConferenceCreateOptions.Builder()
-                .setConferenceAlias(conference_name!!.text.toString())
+                .setConferenceAlias(binding.conferenceName.text.toString())
                 .setParamsHolder(paramsHolder)
                 .build()
 
@@ -183,7 +194,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    @OnClick(R.id.leave)
+
     fun onLeave() {
         VoxeetSDK.conference().leave()
                 .then { result: Boolean?, solver: Solver<Any?>? ->
